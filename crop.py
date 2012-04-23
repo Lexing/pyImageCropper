@@ -150,4 +150,5 @@ elif os.path.isfile(sys.argv[1]):
     cropper.set_file(sys.argv[1])
 else:
     print sys.argv[1] + ' is not a file or directory'
+    sys.exit()
 cropper.run()
