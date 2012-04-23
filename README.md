@@ -1,4 +1,6 @@
 pyImageCropper
 ==============
 
-crop images with python, used for get training images
+crop images interactively with python, used for get training images
+
+PIL required
