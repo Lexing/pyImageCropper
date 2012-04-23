@@ -1,15 +1,19 @@
 pyImageCropper
 ==============
 
-A simple tool for cropping images interactively with python, used for get training images, built on Tkinter
+A simple interactive tool for cropping images with python, built on Tkinter GUI
 
-Requirement
+Used for get training images, might be helpful on some computing vision or machine learning tasks
+
+
+Prerequirements
 ---------------
-1. [Python Image Library](http://www.pythonware.com/products/pil/)
+1. Install [Python Image Library](http://www.pythonware.com/products/pil/)
 
 Usage
 -----
-  With command line: 
-  `python crop.py 'file or directory'`
-  
-  
+1. Start with command line: 
+`python crop.py 'file or directory'`
+
+2. Use mouse to crop images
+3. Press 'space' key to next image
