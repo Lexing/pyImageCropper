@@ -15,5 +15,6 @@ Usage
 1. Start with command line: 
 `python crop.py 'file or directory'`
 
-2. Use mouse to crop images
-3. Press 'space' key to next image
+2. Use mouse to select cropping area
+3. [optional] arrow keys to navigate the area 
+4. Press 'space' key to save cropped area and go to next image

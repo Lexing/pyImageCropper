@@ -14,16 +14,24 @@ import ImageTk
 
 
 class ImageCropper:
+
     def __init__(self):
         self.root = root = Tkinter.Tk()
         self.root.bind("<Button-1>", self.__on_mouse_down)
         self.root.bind("<ButtonRelease-1>", self.__on_mouse_release)
         self.root.bind("<B1-Motion>", self.__on_mouse_move)
         self.root.bind("<Key>", self.__on_key_down)
+        self.root.bind("<Up>", self.__on_keyUP)
+        self.root.bind("<Down>", self.__on_keyDown)
+        self.root.bind("<Left>", self.__on_keyLeft)
+        self.root.bind("<Right>", self.__on_keyRight)
         self.message = None
         self.rectangle = None
         self.canvas_image = None
+        self.canvas_message = None
         self.files = []
+        self.box = [0, 0, 0, 0]
+        self.ratio = 1.0
         self.canvas = Tkinter.Canvas(self.root, 
                              highlightthickness = 0,
                              bd = 0)
@@ -68,6 +76,9 @@ class ImageCropper:
         if exif['Orientation'] == 6:
             return image.rotate(-90)
 
+    def set_ratio(self, ratio):
+        self.ratio = float(ratio)
+
     def set_image(self, filename):
 
         if filename == None:
@@ -107,36 +118,79 @@ class ImageCropper:
         return True
 
     def __on_mouse_down(self, event):
-        self.top_left_x, self.top_left_y = event.x, event.y
+        self.box[0], self.box[1] = event.x, event.y
+        self.box[2], self.box[3] = event.x, event.y
         print "top left coordinates: %s/%s" % (event.x, event.y)
         self.canvas.delete(self.message)
 
     def __on_mouse_release(self, event):
-        self.bottom_right_x, self.bottom_right_y = event.x, event.y
-        print "bottom_right coordinates: %s/%s" % (event.x, event.y)
-        self.box = (self.top_left_x * self.scale,
-                    self.top_left_y * self.scale,
-                    self.bottom_right_x * self.scale, 
-                    self.bottom_right_y * self.scale)
-        print self.box
+        print "bottom_right coordinates: %s/%s" % (self.box[2], self.box[3])
+
+    def __crop_image(self):
+        box = (self.box[0] * self.scale,
+               self.box[1] * self.scale,
+               self.box[2] * self.scale, 
+               self.box[3] * self.scale)
         try:
-            cropped = self.img.crop(self.box)
+            cropped = self.img.crop(box)
             if cropped.size[0] == 0 and cropped.size[1] == 0:
                 raise SystemError('no size')
             cropped.save(self.outputname + '.jpg', 'jpeg')
-            self.message = self.canvas.create_text(10, 10, anchor = Tkinter.NW, text = 'Saved: ' + self.outputname + '.jpg', fill = 'red')
+            self.message = 'Saved: ' + self.outputname + '.jpg'
         except SystemError as e:
             pass
 
+    def __fix_ratio_point(self, px, py):
+        dx = px - self.box[0]
+        dy = py - self.box[1]
+        if min((dy / self.ratio), dx) == dx:
+            dy = int(dx * self.ratio)
+        else:
+            dx = int(dy / self.ratio)
+        return self.box[0] + dx, self.box[1] + dy
+
+
     def __on_mouse_move(self, event):
-        self.canvas.delete(self.rectangle)
-        self.rectangle = self.canvas.create_rectangle(self.top_left_x, self.top_left_y, event.x, event.y)
+        self.box[2], self.box[3] = self.__fix_ratio_point(event.x, event.y)
+        self.__refresh_rectangle()
 
     def __on_key_down(self, event):
+        print event.char
         if event.char == ' ':
+            self.__crop_image()
             self.roll_image()
+            self.canvas.delete(self.canvas_message)
+            self.canvas_message = self.canvas.create_text(10, 10, anchor = Tkinter.NW, text = self.message, fill = 'red')
         elif event.char == 'q':
             self.root.destroy()
+
+    def __on_keyUP(self, event):
+        print 'UP'
+        self.box[1] = self.box[1] - 1
+        self.box[3] = self.box[3] - 1
+        self.__refresh_rectangle()
+
+    def __on_keyDown(self, event):
+        self.box[1] = self.box[1] + 1
+        self.box[3] = self.box[3] + 1
+        self.__refresh_rectangle()
+        print 'Down'
+
+    def __on_keyLeft(self, event):
+        print 'Left'
+        self.box[0] = self.box[0] - 1
+        self.box[2] = self.box[2] - 1
+        self.__refresh_rectangle()
+
+    def __on_keyRight(self, event):
+        print 'Right'
+        self.box[0] = self.box[0] + 1
+        self.box[2] = self.box[2] + 1
+        self.__refresh_rectangle()
+
+    def __refresh_rectangle(self):
+        self.canvas.delete(self.rectangle)
+        self.rectangle = self.canvas.create_rectangle(self.box[0], self.box[1], self.box[2], self.box[3])
 
     def run(self):
         self.roll_image()
@@ -151,4 +205,6 @@ elif os.path.isfile(sys.argv[1]):
 else:
     print sys.argv[1] + ' is not a file or directory'
     sys.exit()
+if len(sys.argv) > 2:
+    cropper.set_ratio(float(sys.argv[2]))
 cropper.run()
